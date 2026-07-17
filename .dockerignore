@@ -1,4 +1,4 @@
-agent/
+/agent/
 tests/
 .git/
 .gitignore
