@@ -1,4 +1,4 @@
-agent/
+/agent/
 __pycache__/
 *.pyc
 .env
