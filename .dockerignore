@@ -1,0 +1,16 @@
+agent/
+tests/
+.git/
+.gitignore
+.env
+.env.example
+.pytest_cache/
+__pycache__/
+*.pyc
+reports/
+*.csv
+*.xlsx
+!tests/fixtures/*.csv
+.github/
+Dockerfile
+.dockerignore

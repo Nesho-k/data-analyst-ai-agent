@@ -1,0 +1,70 @@
+# Secrets GitHub requis (Settings > Secrets and variables > Actions) :
+#   GCP_PROJECT_ID  - ID du projet GCP
+#   GCP_SA_KEY      - contenu du fichier JSON de la cle du service account
+#
+# Ressources GCP prealables (voir les commandes gcloud fournies separement) :
+#   - depot Artifact Registry nomme "data-analyst-agent" dans la region ci-dessous
+#   - secret Secret Manager nomme "OPENAI_API_KEY"
+#   - service account avec les roles Artifact Registry Writer, Cloud Run Admin,
+#     Service Account User et Secret Manager Secret Accessor
+
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGION: europe-west1
+  AR_REPO: data-analyst-agent
+  SERVICE_NAME: data-analyst-agent
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Authentification GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configurer gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configurer Docker pour Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build et push de l'image
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/app"
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:latest" .
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploiement sur Cloud Run
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          gcloud run deploy "$SERVICE_NAME" \
+            --image="$IMAGE:${{ github.sha }}" \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --platform=managed \
+            --allow-unauthenticated \
+            --execution-environment=gen2 \
+            --memory=1Gi \
+            --min-instances=0 \
+            --max-instances=3 \
+            --timeout=3600 \
+            --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest \
+            --set-env-vars=OPENAI_MODEL=gpt-4o-mini \
+            --quiet

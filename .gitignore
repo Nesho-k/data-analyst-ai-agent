@@ -1,0 +1,11 @@
+agent/
+__pycache__/
+*.pyc
+.env
+.streamlit/secrets.toml
+*.egg-info/
+.pytest_cache/
+reports/
+*.csv
+*.xlsx
+!tests/fixtures/*.csv
