@@ -31,8 +31,4 @@ EXPOSE 8501
 
 # Cloud Run fournit le port d'ecoute via la variable PORT (8080 par defaut) :
 # le serveur doit s'y adapter dynamiquement plutot que d'utiliser un port fixe.
-CMD streamlit run app.py \
-    --server.port=${PORT:-8501} \
-    --server.address=0.0.0.0 \
-    --server.headless=true \
-    --browser.gatherUsageStats=false
+CMD ["sh", "-c", "streamlit run app.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true --browser.gatherUsageStats=false"]
