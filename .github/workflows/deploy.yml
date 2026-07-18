@@ -61,6 +61,7 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --execution-environment=gen2 \
+            --session-affinity \
             --memory=1Gi \
             --min-instances=0 \
             --max-instances=3 \
